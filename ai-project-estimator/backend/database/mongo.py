@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_DETAILS = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DETAILS = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client.ai_estimator
 project_collection = database.get_collection("projects")
@@ -45,3 +45,57 @@ async def get_project(project_id: str) -> dict:
         return project
     except Exception:
         return None
+
+# User-related database functions
+user_collection = database.get_collection("users")
+
+async def create_user(user_data: dict) -> dict:
+    """Create a new user document."""
+    user = {
+        **user_data,
+        "created_at": datetime.utcnow()
+    }
+    result = await user_collection.insert_one(user)
+    return {**user, "_id": str(result.inserted_id)}
+
+async def get_user_by_email(email: str) -> dict:
+    """Retrieve a user by email."""
+    try:
+        user = await user_collection.find_one({"email": email})
+        if user:
+            user["_id"] = str(user["_id"])
+        return user
+    except Exception:
+        return None
+
+async def update_user_profile(email: str, update_data: dict) -> bool:
+    """Update an existing user's profile information by email."""
+    try:
+        # Filter only allowed fields to be updated
+        allowed_fields = {"name", "title", "avatar_url"}
+        filtered_data = {k: v for k, v in update_data.items() if k in allowed_fields}
+        
+        if not filtered_data:
+            return False
+            
+        result = await user_collection.update_one(
+            {"email": email},
+            {"$set": filtered_data}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Failed to update user {email}: {e}")
+        return False
+
+async def update_user_password(email: str, new_hashed_password: str) -> bool:
+    """Update an existing user's hashed password."""
+    try:
+        result = await user_collection.update_one(
+            {"email": email},
+            {"$set": {"hashed_password": new_hashed_password}}
+        )
+        return result.modified_count > 0 or result.matched_count > 0
+    except Exception as e:
+        print(f"Failed to update password for {email}: {e}")
+        return False
+

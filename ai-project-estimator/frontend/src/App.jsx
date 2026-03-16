@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ReportView from './pages/ReportView';
 import RiskAnalysis from './pages/RiskAnalysis';
@@ -20,14 +23,24 @@ import {
   FileText,
   Plus,
   Sun,
-  Moon
+  Moon,
+  LogOut
 } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 
 // Navigation Sidebar Component
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
+  
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   return (
     <div className="w-64 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen sticky top-0 transition-colors">
@@ -44,8 +57,8 @@ const Sidebar = () => {
 
       {/* Navigation Links */}
       <nav className="flex-1 py-6 px-3 space-y-1">
-        <Link to="/" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
-          <LayoutDashboard className={`h-5 w-5 mr-3 ${isActive('/') ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-300'}`} />
+        <Link to="/dashboard" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/dashboard') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
+          <LayoutDashboard className={`h-5 w-5 mr-3 ${isActive('/dashboard') ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-300'}`} />
           <span className="font-medium text-sm">Dashboard</span>
         </Link>
         <Link to="/projects" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/projects') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
@@ -72,20 +85,33 @@ const Sidebar = () => {
 
       {/* Bottom Action Area */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        <Link to="/" className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition-colors shadow-lg shadow-indigo-500/20">
+        <Link to="/dashboard" className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg font-medium text-sm transition-colors shadow-lg shadow-indigo-500/20">
           <Plus className="h-4 w-4 mr-2" /> New Project
         </Link>
       </div>
 
       {/* User Profile Footer */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center">
-        <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden mr-3">
-          <User className="h-6 w-6 text-slate-400" />
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden mr-3 border border-slate-200 dark:border-slate-600">
+            {user.avatar_url ? (
+               <img src={user.avatar_url} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+               <User className="h-6 w-6 text-slate-400" />
+            )}
+          </div>
+          <div className="overflow-hidden">
+            <div className="text-slate-900 dark:text-white text-sm font-bold truncate max-w-[100px]">{user.name || 'User'}</div>
+            <div className="text-slate-500 text-xs truncate max-w-[100px]">{user.email || 'Email'}</div>
+          </div>
         </div>
-        <div>
-          <div className="text-slate-900 dark:text-white text-sm font-bold">Alex Morgan</div>
-          <div className="text-slate-500 text-xs">VP of Engineering</div>
-        </div>
+        <button 
+          onClick={handleLogout}
+          className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          title="Logout"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );
@@ -132,31 +158,72 @@ const Header = () => {
   );
 };
 
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+};
+
+const DashboardLayout = ({ children }) => (
+  <div className="flex min-h-screen bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-200 font-sans selection:bg-indigo-500/30 relative z-10 transition-colors">
+    <Sidebar />
+    <div className="flex-1 flex flex-col min-w-0">
+      <Header />
+      <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  </div>
+);
+
+const GuestLayout = ({ children }) => (
+  <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500/30 font-sans">
+    <nav className="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 z-50 sticky top-0">
+        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="bg-gradient-to-br from-indigo-500 to-cyan-400 p-1.5 rounded">
+               <BarChart2 className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">AI Project Estimator</span>
+          </Link>
+          <div className="flex items-center gap-4">
+             <Link to="/register" className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)]">
+               Sign Up to Save
+             </Link>
+          </div>
+        </div>
+    </nav>
+    <main className="flex-1 p-6 lg:p-8 overflow-y-auto w-full">
+      {children}
+    </main>
+  </div>
+);
+
+const HybridProjectRoute = () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    return <DashboardLayout><ReportView /></DashboardLayout>;
+  }
+  return <GuestLayout><ReportView /></GuestLayout>;
+};
+
 function App() {
   return (
     <Router>
-      <div className="flex min-h-screen bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-200 font-sans selection:bg-indigo-500/30 relative z-10 transition-colors">
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Persistent App Sidebar */}
-        <Sidebar />
-
-        {/* Main Content Pane */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header />
-
-          <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/project/:id" element={<ReportView />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/repositories" element={<Repositories />} />
-              <Route path="/risk-analysis" element={<RiskAnalysis />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<SettingsView />} />
-            </Routes>
-          </main>
-        </div>
-      </div>
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
+        <Route path="/project/:id" element={<HybridProjectRoute />} />
+        <Route path="/projects" element={<PrivateRoute><DashboardLayout><Projects /></DashboardLayout></PrivateRoute>} />
+        <Route path="/repositories" element={<PrivateRoute><DashboardLayout><Repositories /></DashboardLayout></PrivateRoute>} />
+        <Route path="/risk-analysis" element={<PrivateRoute><DashboardLayout><RiskAnalysis /></DashboardLayout></PrivateRoute>} />
+        <Route path="/reports" element={<PrivateRoute><DashboardLayout><Reports /></DashboardLayout></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><DashboardLayout><SettingsView /></DashboardLayout></PrivateRoute>} />
+      </Routes>
     </Router>
   );
 }
