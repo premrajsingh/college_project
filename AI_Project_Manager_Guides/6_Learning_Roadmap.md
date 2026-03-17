@@ -64,3 +64,13 @@ To build this massive Agentic AI Project Manager, follow this structured roadmap
 2. **Frontend Deployment:** Use **Vercel** or **Netlify** to host your Vite/React app.
 3. **Database:** Ensure your MongoDB Atlas cluster allows connections from your Render backend's IP address.
 4. **Environment Variables:** Make sure you successfully add your `OPENAI_API_KEY` and MongoDB URI to the Render secret settings, not in your code!
+
+### Project Tech Stack
+
+Python, FastAPI, React.js, Machine Learning (Random Forest/Regression), Generative AI (LLMs: OpenAI GPT-4o, Google Gemini, Anthropic Claude), Agentic AI (Multi-Agent System), MongoDB, Tailwind CSS, REST APIs, GitHub
+
+### Project Tech Stack (Updated)
+
+Python, FastAPI, React.js, Machine Learning (Random Forest/Regression), Generative AI (LLMs: OpenAI GPT-4o, Google Gemini, Anthropic Claude), Agentic AI (Multi-Agent System), MongoDB, Tailwind CSS, REST APIs, GitHub
+
+---
