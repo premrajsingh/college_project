@@ -9,13 +9,13 @@ class OrchestratorAgent:
     def __init__(self, project_id: str):
         self.project_id = project_id
         
-    async def run_pipeline(self, github_url: str):
+    async def run_pipeline(self, github_url: str = None, zip_path: str = None):
         """Runs all sub-agents sequentially and updates MongoDB."""
         try:
             # 1. Metrics Extract
             print(f"[{self.project_id}] Starting Metrics Extraction...")
             metrics_agent = MetricsAgent()
-            metrics = metrics_agent.analyze(github_url)
+            metrics = metrics_agent.analyze(github_url, zip_path)
             await update_project(self.project_id, {"metrics": metrics})
             
             # 2. Estimation 

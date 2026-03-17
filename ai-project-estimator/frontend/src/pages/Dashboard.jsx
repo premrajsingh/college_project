@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { analyzeProject } from '../services/api';
 import {
@@ -17,19 +17,21 @@ import {
 
 const Dashboard = () => {
   const [url, setUrl] = useState('');
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showInjector, setShowInjector] = useState(false);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!url) return;
+    if (e) e.preventDefault();
+    if (!url && !file) return;
 
     setLoading(true);
     setError(null);
     try {
-      const data = await analyzeProject(url);
+      const data = await analyzeProject(url, file);
       if (data && data.project_id) {
         navigate(`/project/${data.project_id}`);
       }
@@ -71,30 +73,49 @@ const Dashboard = () => {
             {/* DROP ARCHIVE zone - CYBERCORE style */}
             <div className="flex-1 flex flex-col md:flex-row gap-6 items-center">
               <div className="relative flex-shrink-0">
-                <div className="w-48 h-48 rounded-full border-2 border-dashed border-cyan-500/40 flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0B1120]/80 hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all cursor-pointer group/archive">
-                  <CloudUpload className="h-10 w-10 text-cyan-400 mb-2 group-hover/archive:text-cyan-300" />
-                  <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Drop Archive</span>
-                  <span className="text-[10px] text-slate-500 mt-1 font-mono">.ZIP / .TAR.GZ</span>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".zip"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFile(e.target.files[0]);
+                      setUrl(''); // Clear URL if file is selected
+                    }
+                  }}
+                />
+                <div 
+                  onClick={() => fileInputRef.current.click()}
+                  className={`w-48 h-48 rounded-full border-2 border-dashed ${file ? 'border-indigo-500 bg-indigo-500/10' : 'border-cyan-500/40 bg-slate-50 dark:bg-[#0B1120]/80 hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]'} flex flex-col items-center justify-center transition-all cursor-pointer group/archive`}
+                >
+                  <CloudUpload className={`h-10 w-10 mb-2 ${file ? 'text-indigo-400' : 'text-cyan-400 group-hover/archive:text-cyan-300'}`} />
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 text-center px-4 w-full truncate">
+                     {file ? file.name : "Drop Archive"}
+                  </span>
+                  {!file && <span className="text-[10px] text-slate-500 mt-1 font-mono">.ZIP Archive</span>}
                 </div>
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+                {!file && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>}
               </div>
 
-              <div className="flex-1 w-full max-w-md">
-                <span className="text-xs font-mono text-cyan-400/80 hover:text-cyan-400 cursor-pointer block mb-3">CONNECT URL</span>
+              <div className="flex-1 w-full max-w-md flex flex-col justify-center">
+                <span className="text-xs font-mono text-cyan-400/80 mb-3 block text-center md:text-left">OR CONNECT URL</span>
                 <form onSubmit={handleSubmit} className="relative group/input">
                   <div className="flex items-center bg-slate-50 dark:bg-[#0B1120] border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden focus-within:border-cyan-500/50 focus-within:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all">
                     <span className="pl-3 text-slate-500 group-focus-within/input:text-cyan-400"><LinkIcon className="h-4 w-4" /></span>
                     <input
                       type="url"
-                      className="w-full bg-transparent border-none py-3 px-3 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-0 placeholder-slate-400 dark:placeholder-slate-600 font-mono"
+                      className="w-full bg-transparent border-none py-3 px-3 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-0 placeholder-slate-400 dark:placeholder-slate-600 font-mono disabled:opacity-50"
                       placeholder="https://github.com/username/project"
                       value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      required
-                      disabled={loading}
+                      onChange={(e) => {
+                          setUrl(e.target.value);
+                          if (e.target.value) setFile(null);
+                      }}
+                      disabled={loading || file}
                     />
-                    <button type="submit" disabled={!url || loading} className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold py-2 px-5 rounded-r-lg text-xs uppercase tracking-wider transition-all active:scale-95">
-                      Connect & Analyze →
+                    <button type="submit" disabled={(!url && !file) || loading} className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold py-2 px-5 rounded-r-lg text-xs uppercase tracking-wider transition-all active:scale-95">
+                      Analyze →
                     </button>
                   </div>
                 </form>

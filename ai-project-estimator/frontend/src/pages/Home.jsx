@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bot, BarChart2, Shield, Zap, ArrowRight, CloudUpload, Link as LinkIcon, Activity, AlertTriangle } from 'lucide-react';
 import { analyzeProject } from '../services/api';
@@ -6,13 +6,15 @@ import { analyzeProject } from '../services/api';
 const Home = () => {
   const [showInjector, setShowInjector] = useState(false);
   const [url, setUrl] = useState('');
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   const handleGuestEstimation = async (e) => {
-    e.preventDefault();
-    if (!url) return;
+    if (e) e.preventDefault();
+    if (!url && !file) return;
 
     // Check free estimation count
     const freeEstimations = parseInt(localStorage.getItem('freeEstimations') || '0', 10);
@@ -24,7 +26,7 @@ const Home = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await analyzeProject(url);
+      const data = await analyzeProject(url, file);
       if (data && data.project_id) {
         // Increment and save count
         localStorage.setItem('freeEstimations', (freeEstimations + 1).toString());
@@ -104,27 +106,46 @@ const Home = () => {
 
               <div className="flex flex-col md:flex-row gap-6 items-center border-t border-white/10 pt-6">
                 <div className="relative flex-shrink-0">
-                  <div className="w-32 h-32 rounded-full border-2 border-dashed border-cyan-500/40 flex flex-col items-center justify-center bg-slate-900/50 hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all cursor-pointer group/archive">
-                    <CloudUpload className="h-8 w-8 text-cyan-400 mb-2 group-hover/archive:text-cyan-300" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">File Drop</span>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept=".zip"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setFile(e.target.files[0]);
+                        setUrl(''); // Clear URL if file is selected
+                      }
+                    }}
+                  />
+                  <div 
+                    onClick={() => fileInputRef.current.click()}
+                    className={`w-32 h-32 rounded-full border-2 border-dashed ${file ? 'border-indigo-500 bg-indigo-500/10' : 'border-cyan-500/40 bg-slate-900/50 hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]'} flex flex-col items-center justify-center transition-all cursor-pointer group/archive`}
+                  >
+                    <CloudUpload className={`h-8 w-8 mb-2 ${file ? 'text-indigo-400' : 'text-cyan-400 group-hover/archive:text-cyan-300'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 text-center px-2 truncate w-full">
+                      {file ? file.name : "ZIP Drop"}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex-1 w-full">
-                  <span className="text-xs font-mono text-cyan-400/80 hover:text-cyan-400 cursor-pointer block mb-3">CONNECT REPOSITORY URL</span>
+                <div className="flex-1 w-full flex flex-col justify-center">
+                  <span className="text-xs font-mono text-cyan-400/80 mb-3 block text-center md:text-left">OR CONNECT REPOSITORY URL</span>
                   <form onSubmit={handleGuestEstimation} className="relative group/input">
                     <div className="flex items-center bg-slate-900/50 border border-slate-700 rounded-lg overflow-hidden focus-within:border-cyan-500/50 focus-within:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all">
                       <span className="pl-3 text-slate-500 group-focus-within/input:text-cyan-400"><LinkIcon className="h-4 w-4" /></span>
                       <input
                         type="url"
-                        className="w-full bg-transparent border-none py-3 px-3 text-white text-sm focus:outline-none focus:ring-0 placeholder-slate-500 font-mono"
+                        className="w-full bg-transparent border-none py-3 px-3 text-white text-sm focus:outline-none focus:ring-0 placeholder-slate-500 font-mono disabled:opacity-50"
                         placeholder="https://github.com/username/project"
                         value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        required
-                        disabled={loading}
+                        onChange={(e) => {
+                          setUrl(e.target.value);
+                          if (e.target.value) setFile(null); // Clear file if URL is entered
+                        }}
+                        disabled={loading || file}
                       />
-                      <button type="submit" disabled={!url || loading} className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold py-3 px-5 rounded-r-lg text-xs uppercase tracking-wider transition-all active:scale-95">
+                      <button type="submit" disabled={(!url && !file) || loading} className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold py-3 px-5 rounded-r-lg text-xs uppercase tracking-wider transition-all active:scale-95">
                         Initiate →
                       </button>
                     </div>

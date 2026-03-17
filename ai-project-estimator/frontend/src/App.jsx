@@ -10,6 +10,7 @@ import SettingsView from './pages/Settings';
 import Projects from './pages/Projects';
 import Repositories from './pages/Repositories';
 import Reports from './pages/Reports';
+import ProjectPlanning from './pages/ProjectPlanning';
 import {
   BarChart2,
   Bell,
@@ -24,7 +25,8 @@ import {
   Plus,
   Sun,
   Moon,
-  LogOut
+  LogOut,
+  Lightbulb
 } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 
@@ -60,6 +62,10 @@ const Sidebar = () => {
         <Link to="/dashboard" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/dashboard') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
           <LayoutDashboard className={`h-5 w-5 mr-3 ${isActive('/dashboard') ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-300'}`} />
           <span className="font-medium text-sm">Dashboard</span>
+        </Link>
+        <Link to="/planning" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/planning') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
+          <Lightbulb className={`h-5 w-5 mr-3 ${isActive('/planning') ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-amber-500'}`} />
+          <span className="font-medium text-sm">Idea Estimator</span>
         </Link>
         <Link to="/projects" className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive('/projects') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}>
           <FolderOpen className={`h-5 w-5 mr-3 ${isActive('/projects') ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-300'}`} />
@@ -217,6 +223,7 @@ function App() {
 
         {/* Protected Dashboard Routes */}
         <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
+        <Route path="/planning" element={<PrivateRoute><DashboardLayout><ProjectPlanning /></DashboardLayout></PrivateRoute>} />
         <Route path="/project/:id" element={<HybridProjectRoute />} />
         <Route path="/projects" element={<PrivateRoute><DashboardLayout><Projects /></DashboardLayout></PrivateRoute>} />
         <Route path="/repositories" element={<PrivateRoute><DashboardLayout><Repositories /></DashboardLayout></PrivateRoute>} />

@@ -99,3 +99,36 @@ async def update_user_password(email: str, new_hashed_password: str) -> bool:
         print(f"Failed to update password for {email}: {e}")
         return False
 
+# Planning-related database functions
+planning_collection = database.get_collection("plannings")
+
+async def create_planning(planning_data: dict) -> str:
+    """Create a new planning estimation document and return its ID."""
+    planning = {
+        **planning_data,
+        "status": "processing",
+        "created_at": datetime.utcnow(),
+        "estimation": None
+    }
+    result = await planning_collection.insert_one(planning)
+    return str(result.inserted_id)
+
+async def update_planning(planning_id: str, update_data: dict) -> bool:
+    """Update an existing planning document."""
+    try:
+        result = await planning_collection.update_one(
+            {"_id": ObjectId(planning_id)},
+            {"$set": update_data}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Failed to update planning {planning_id}: {e}")
+        return False
+
+async def get_planning(planning_id: str) -> dict:
+    """Retrieve a planning by ID."""
+    try:
+        planning = await planning_collection.find_one({"_id": ObjectId(planning_id)})
+        return planning
+    except Exception:
+        return None
