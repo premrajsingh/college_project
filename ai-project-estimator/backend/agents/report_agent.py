@@ -21,12 +21,12 @@ class ReportAgent:
         if self.client:
             try:
                 response = await self.client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-4o",
                     messages=[
-                        {"role": "system", "content": "You are an expert AI Project Manager Assistant. Generate a comprehensive project health report in clean Markdown. Be specific to the provided metrics."},
+                        {"role": "system", "content": "You are an expert AI Software Architect. Generate a comprehensive project health report in clean Markdown. You MUST include explicit line-level code optimization examples and code snippets for the files provided in Critical Files Content."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=1500,
+                    max_tokens=2500,
                     temperature=0.7
                 )
                 return response.choices[0].message.content
